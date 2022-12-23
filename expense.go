@@ -10,6 +10,9 @@ import (
 // ErrInvalidExpense is returned when expense is invalid
 var ErrInvalidExpense = errors.New("invalid expense")
 
+// ErrNoExpense is returned when no expense is found
+var ErrNoExpense = errors.New("no expense")
+
 // Expense represents an expense in tracking system
 type Expense struct {
 	ID     int64    `json:"id"`
