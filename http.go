@@ -18,6 +18,7 @@ func NewHandler(db *DB) *Handler {
 
 func (h *Handler) Install(e *echo.Echo) {
 	e.POST("/expenses", h.Create)
+	e.GET("/expenses", h.List)
 	e.GET("/expenses/:id", h.Get)
 	e.PUT("/expenses/:id", h.Update)
 }
@@ -86,6 +87,28 @@ func (h *Handler) Get(c echo.Context) error {
 	case errors.Is(err, ErrNoExpense):
 		return echo.NewHTTPError(http.StatusNotFound, echo.Map{
 			"code":    http.StatusNotFound,
+			"message": err.Error(),
+		})
+
+	default:
+		return echo.NewHTTPError(http.StatusInternalServerError, echo.Map{
+			"code":    http.StatusInternalServerError,
+			"message": "Internal Server Error",
+		})
+	}
+}
+
+func (h *Handler) List(c echo.Context) error {
+	ctx := c.Request().Context()
+	expenses, err := h.db.List(ctx)
+
+	switch {
+	case err == nil:
+		return c.JSON(http.StatusOK, expenses)
+
+	case errors.Is(err, ErrClosed):
+		return echo.NewHTTPError(http.StatusServiceUnavailable, echo.Map{
+			"code":    http.StatusServiceUnavailable,
 			"message": err.Error(),
 		})
 

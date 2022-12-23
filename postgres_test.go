@@ -120,3 +120,38 @@ func TestDB_Update(t *testing.T) {
 		t.Fatal("expected expense note to be lunch")
 	}
 }
+
+func TestDB_List(t *testing.T) {
+	db, release := acquire()
+	defer release()
+
+	ctx := context.Background()
+	expenses, err := db.List(ctx)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(expenses) != 0 {
+		t.Fatal("expected no expenses")
+	}
+
+	_, _ = db.Create(ctx, &Expense{
+		Title:  "food",
+		Amount: 100,
+		Note:   "dinner",
+		Tags:   []string{"food", "dinner"},
+	})
+	_, _ = db.Create(ctx, &Expense{
+		Title:  "drink",
+		Amount: 100,
+		Note:   "lunch",
+		Tags:   []string{"drink", "lunch"},
+	})
+
+	expenses, err = db.List(ctx)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(expenses) != 2 {
+		t.Fatal("expected two expenses")
+	}
+}
