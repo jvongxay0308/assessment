@@ -75,6 +75,33 @@ func (db *DB) Get(ctx context.Context, id int64) (*Expense, error) {
 	return e, nil
 }
 
+func (db *DB) List(ctx context.Context) ([]*Expense, error) {
+	query, args := sq.Select("id", "title", "amount", "note", "tags").
+		From("expenses").
+		PlaceholderFormat(sq.Dollar).
+		MustSql()
+
+	rows, err := db.db.QueryContext(ctx, query, args...)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	expenses := make([]*Expense, 0)
+	for rows.Next() {
+		e := &Expense{}
+		err := rows.Scan(&e.ID, &e.Title, &e.Amount, &e.Note, pq.Array(&e.Tags))
+		if err != nil {
+			return nil, err
+		}
+		expenses = append(expenses, e)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return expenses, nil
+}
+
 func (db *DB) Update(ctx context.Context, e *Expense) (*Expense, error) {
 	e = e.Sanitize()
 	if err := e.Validate(); err != nil {
