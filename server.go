@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"net/http"
+	"net/url"
 	"os"
 	"os/signal"
 	"time"
@@ -21,6 +22,21 @@ func main() {
 	// so that we can use the zap.L() function to get the logger
 	// anywhere in the code.
 	zap.ReplaceGlobals(zlog)
+
+	// parse the database URL from the environment
+	dbURL, err := url.Parse(GetEnv("DATABASE_URL", "postgres://postgres:postgres@localhost/postgres?sslmode=disable"))
+	if err != nil {
+		zlog.Fatal("parse the database URL", zap.Error(err))
+	}
+
+	// try to migrate the database to the latest version
+	// before starting the server
+	if err := tryToMigrate(dbURL.String()); err != nil {
+		zlog.Fatal("migrate the database",
+			zap.String("dbURL", dbURL.Redacted()), // Redacted password from the URL
+			zap.Error(err),
+		)
+	}
 
 	e := echo.New()
 
