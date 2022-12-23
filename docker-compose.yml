@@ -1,0 +1,47 @@
+version: '3.8'
+
+volumes:
+  pgsql15:
+    name: pgsql15
+
+networks:
+  go:
+    name: go
+    driver: bridge
+
+services:
+  pgsql15:
+    image: postgres:15
+    hostname: pgsql15
+    container_name: pgsql15
+    restart: always
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: Go-Software-Engineering-Bootcamp
+      TZ: Asia/Bangkok
+      PGTZ: Asia/Bangkok
+    volumes:
+      - pgsql15:/var/lib/postgresql/data
+    networks:
+      - go
+    ports:
+      - 5432:5432
+    expose:
+      - '5432'
+    mem_limit: 256M
+    cpus: 1
+
+  go:
+    hostname: go
+    container_name: go
+    build:
+      context: .
+      dockerfile: Dockerfile
+    environment:
+      - DATABASE_URL=postgres://postgres:Go-Software-Engineering-Bootcamp@pgsql15/postgres?sslmode=disable
+    networks:
+      - go
+    mem_limit: 256M
+    cpus: 1
+    depends_on:
+      - pgsql15
