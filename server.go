@@ -46,6 +46,7 @@ func main() {
 	defer dbConn.Close()
 
 	e := echo.New()
+	e.Use(Auth)
 
 	db := New(dbConn)
 	handler := NewHandler(db)
