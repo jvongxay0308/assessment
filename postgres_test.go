@@ -83,3 +83,40 @@ func TestDB_Get(t *testing.T) {
 		t.Fatal("expected expense ID to be 1")
 	}
 }
+
+func TestDB_Update(t *testing.T) {
+	db, release := acquire()
+	defer release()
+
+	ctx := context.Background()
+	_, err := db.Update(ctx, &Expense{
+		Title:  "food",
+		Amount: 100,
+		Note:   "dinner",
+		Tags:   []string{"food", "dinner"},
+	})
+	if err == nil || !errors.Is(err, ErrNoExpense) {
+		t.Fatalf("expected %v, got %v", ErrNoExpense, err)
+	}
+
+	_, _ = db.Create(ctx, &Expense{
+		ID:     1,
+		Title:  "food",
+		Amount: 100,
+		Note:   "dinner",
+		Tags:   []string{"food", "dinner"},
+	})
+	expense, err := db.Update(ctx, &Expense{
+		ID:     1,
+		Title:  "food",
+		Amount: 100,
+		Note:   "lunch",
+		Tags:   []string{"food", "lunch"},
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if expense.Note != "lunch" {
+		t.Fatal("expected expense note to be lunch")
+	}
+}
