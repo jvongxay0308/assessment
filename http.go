@@ -18,6 +18,7 @@ func NewHandler(db *DB) *Handler {
 
 func (h *Handler) Install(e *echo.Echo) {
 	e.POST("/expenses", h.Create)
+	e.GET("/expenses", h.List)
 	e.GET("/expenses/:id", h.Get)
 	e.PUT("/expenses/:id", h.Update)
 }
