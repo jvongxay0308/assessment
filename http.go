@@ -97,6 +97,28 @@ func (h *Handler) Get(c echo.Context) error {
 	}
 }
 
+func (h *Handler) List(c echo.Context) error {
+	ctx := c.Request().Context()
+	expenses, err := h.db.List(ctx)
+
+	switch {
+	case err == nil:
+		return c.JSON(http.StatusOK, expenses)
+
+	case errors.Is(err, ErrClosed):
+		return echo.NewHTTPError(http.StatusServiceUnavailable, echo.Map{
+			"code":    http.StatusServiceUnavailable,
+			"message": err.Error(),
+		})
+
+	default:
+		return echo.NewHTTPError(http.StatusInternalServerError, echo.Map{
+			"code":    http.StatusInternalServerError,
+			"message": "Internal Server Error",
+		})
+	}
+}
+
 func (h *Handler) Update(c echo.Context) error {
 	expense := &Expense{}
 	if err := c.Bind(expense); err != nil {
