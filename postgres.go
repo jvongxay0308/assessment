@@ -75,6 +75,32 @@ func (db *DB) Get(ctx context.Context, id int64) (*Expense, error) {
 	return e, nil
 }
 
+func (db *DB) Update(ctx context.Context, e *Expense) (*Expense, error) {
+	e = e.Sanitize()
+	if err := e.Validate(); err != nil {
+		return nil, err
+	}
+
+	query, args := sq.Update("expenses").
+		Set("title", e.Title).
+		Set("amount", e.Amount).
+		Set("note", e.Note).
+		Set("tags", pq.Array(e.Tags)).
+		Where("id = ?", e.ID).
+		Suffix("RETURNING id, title, amount, note, tags").
+		PlaceholderFormat(sq.Dollar).
+		MustSql()
+	row := db.db.QueryRow(query, args...)
+	err := row.Scan(&e.ID, &e.Title, &e.Amount, &e.Note, pq.Array(&e.Tags))
+	if errors.Is(err, sql.ErrNoRows) {
+		return nil, fmt.Errorf("Update: %w", ErrNoExpense)
+	}
+	if err != nil {
+		return nil, fmt.Errorf("Update: %w", err)
+	}
+	return e, nil
+}
+
 // Save saves an expense to the database and returns the saved expense
 func (db *DB) Save(ctx context.Context, e *Expense) (*Expense, error) {
 	query, args := sq.Insert("expenses").
