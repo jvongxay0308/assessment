@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"database/sql"
 	"net/http"
 	"net/url"
 	"os"
@@ -38,7 +39,17 @@ func main() {
 		)
 	}
 
+	dbConn, err := sql.Open("postgres", dbURL.String())
+	if err != nil {
+		zlog.Fatal("open the database connection", zap.Error(err))
+	}
+	defer dbConn.Close()
+
 	e := echo.New()
+
+	db := New(dbConn)
+	handler := NewHandler(db)
+	handler.Install(e)
 
 	// Start the server
 	errC := make(chan error, 1)
