@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"database/sql"
+	"errors"
 	"os"
 	"testing"
 )
@@ -55,5 +56,30 @@ func TestDB_Create(t *testing.T) {
 	}
 	if expense.ID == 0 {
 		t.Fatal("expense ID must be greater than zero")
+	}
+}
+
+func TestDB_Get(t *testing.T) {
+	db, release := acquire()
+	defer release()
+
+	ctx := context.Background()
+	_, err := db.Get(ctx, 1)
+	if err == nil || !errors.Is(err, ErrNoExpense) {
+		t.Fatalf("expected %v, got %v", ErrNoExpense, err)
+	}
+
+	_, _ = db.Create(ctx, &Expense{
+		Title:  "food",
+		Amount: 100,
+		Note:   "dinner",
+		Tags:   []string{"food", "dinner"},
+	})
+	expense, err := db.Get(ctx, 1)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if expense.ID != 1 {
+		t.Fatal("expected expense ID to be 1")
 	}
 }
