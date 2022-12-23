@@ -18,6 +18,7 @@ func NewHandler(db *DB) *Handler {
 
 func (h *Handler) Install(e *echo.Echo) {
 	e.POST("/expenses", h.Create)
+	e.GET("/expenses/:id", h.Get)
 }
 
 func (h *Handler) Create(c echo.Context) error {
