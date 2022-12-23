@@ -56,6 +56,25 @@ func (db *DB) Create(ctx context.Context, e *Expense) (*Expense, error) {
 	return db.Save(ctx, e)
 }
 
+func (db *DB) Get(ctx context.Context, id int64) (*Expense, error) {
+	query, args := sq.Select("id", "title", "amount", "note", "tags").
+		From("expenses").
+		Where("id = ?", id).
+		PlaceholderFormat(sq.Dollar).
+		MustSql()
+
+	row := db.db.QueryRow(query, args...)
+	e := &Expense{}
+	err := row.Scan(&e.ID, &e.Title, &e.Amount, &e.Note, pq.Array(&e.Tags))
+	if errors.Is(err, sql.ErrNoRows) {
+		return nil, fmt.Errorf("Get: %d %w", id, ErrNoExpense)
+	}
+	if err != nil {
+		return nil, fmt.Errorf("Get: %w", err)
+	}
+	return e, nil
+}
+
 // Save saves an expense to the database and returns the saved expense
 func (db *DB) Save(ctx context.Context, e *Expense) (*Expense, error) {
 	query, args := sq.Insert("expenses").
